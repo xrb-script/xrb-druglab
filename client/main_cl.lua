@@ -162,7 +162,7 @@ end
 function CreateOrUpdateLabTarget(labId, labData)
     if not PlayerLoaded or not labData then return end
     local drugConfig = Config.DrugTypes[labData.type]
-    if not drugConfig then print(("[DrugLabs] Error: Missing drugConfig for type '%s' on lab ID %s"):format(labData.type, labId)); return end
+    if not drugConfig then print(("[xrb-DrugLabs] Error: Missing drugConfig for type '%s' on lab ID %s"):format(labData.type, labId)); return end
 
     local mainTargetName = 'drug_lab_main_' .. labId
     local stashTargetName = 'drug_lab_stash_' .. labId
@@ -539,7 +539,7 @@ AddEventHandler('onResourceStop', function(resourceName)
             exports.ox_target:removeZone('drug_lab_process_' .. id)
         end
         CurrentLabs = {}
-        print("[DrugLabs] Client script (Player Module) stopped, cleaned up blips and targets.")
+        print("[xrb-DrugLabs] Client script (Player Module) stopped, cleaned up blips and targets.")
     end
 end)
 
@@ -555,7 +555,7 @@ function ShowNotification(source, data)
     if exports.ox_lib and exports.ox_lib.notify then
         exports.ox_lib:notify(data)
     else
-        print("[DrugLabs] Error: ox_lib or ox_lib.notify is not available for ShowNotification.")
+        print("[xrb-DrugLabs] Error: ox_lib or ox_lib.notify is not available for ShowNotification.")
         if Config.Framework == "ESX" then
             local ESX = exports.es_extended:getSharedObject()
             if ESX then ESX.ShowNotification(data.description or "Notification") end
