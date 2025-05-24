@@ -3,6 +3,9 @@ esx #esx qbcore #qbox #qbcore #fivem #server
 
 https://youtu.be/AswnZDLuEpY?si=GGDrv9BqT3LUFMkI
 
+* **Download MLO** **Meth, Coke, Weed**
+https://github.com/xrb-script/cokemethweed-MLO
+
 *   **Drug Lab Management System:** This script allows players to buy, sell, and manage laboratories for producing various drugs on a FiveM server (compatible with ESX and QBCore).
 *   **Buying and Selling Labs:**
     *   Players can find and purchase unowned labs through map interactions (using `ox_target`).
