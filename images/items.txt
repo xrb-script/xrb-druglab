@@ -1,1 +1,24 @@
-
+    	['methgel'] = {
+        label = 'Meth Gel',
+        weight = 30,
+        stack = true,
+        close = false
+    },
+	    ['ouncofmeth'] = {
+        label = 'ounce of Meth',
+        weight = 10,
+        stack = true,
+        close = false
+    },
+		['cokepowder'] = {
+        label = 'Coke Powder',
+        weight = 30,
+        stack = true,
+        close = false
+    },
+		['ouncofcoke'] = {
+        label = 'Ounce of Coke',
+        weight = 10,
+        stack = true,
+        close = false
+    },
