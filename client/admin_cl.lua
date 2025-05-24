@@ -27,7 +27,7 @@ RegisterNetEvent('drug_labs:client:openAdminMenu', function(labsData)
         options = options
     })
     exports.ox_lib:showContext('drug_lab_admin_main_menu')
-end) --- END OF FUNCTION ---
+end)
 
 function AdminCreateLabPrompt()
     Citizen.CreateThread(function()
@@ -68,18 +68,17 @@ function AdminCreateLabPrompt()
 
                 TriggerServerEvent('drug_labs:server:adminCreateLab', {type = labType, price = price, coords = coords})
             elseif input == false then
-                -- User cancelled
+                
             elseif input == nil and timeout == 0 then
                 ShowNotification(nil, {description = "Input dialog timed out.", type = 'warning'})
             else
                 ShowNotification(nil, {description = Strings['invalid_input'], type = 'error'})
             end
-        end) --- END OF CITIZEN.CREATETHREAD PER INPUTDIALOG ---
-    end) --- END OF FUNCTION --- (Main Citizen.CreateThread)
-end --- END OF FUNCTION --- (AdminCreateLabPrompt)
+        end) 
+    end) 
+end 
 
 function AdminViewLabsList()
-    -- KONTROLLI I SAKTE NESE TABELA ESHTE BOSHE
     if not currentAdminLabsCache or next(currentAdminLabsCache) == nil then
         ShowNotification(nil, {description = Strings['admin_no_active_labs'], type = 'inform'})
         return
@@ -113,7 +112,7 @@ function AdminViewLabsList()
         options = labOptions
     })
     exports.ox_lib:showContext('drug_lab_admin_view_labs_list')
-end --- END OF FUNCTION ---
+end 
 
 function AdminShowLabDetails(labId)
     local labData = currentAdminLabsCache[labId]
@@ -156,7 +155,7 @@ function AdminShowLabDetails(labId)
                     if confirm == "confirm" then
                         TriggerServerEvent('drug_labs:server:adminDeleteLab', labId)
                     end
-                end) --- END OF FUNCTION ---
+                end)
             end
         }
     }
@@ -184,7 +183,7 @@ function AdminShowLabDetails(labId)
         options = detailOptions
     })
     exports.ox_lib:showContext('drug_lab_admin_lab_details_' .. labId)
-end --- END OF FUNCTION ---
+end
 
 function AdminEditPositionsMenu(labId)
     local labData = currentAdminLabsCache[labId]
@@ -205,8 +204,7 @@ function AdminEditPositionsMenu(labId)
                 local currentCoords = GetEntityCoords(playerPed)
                 TriggerServerEvent('drug_labs:server:adminSetStashPos', labId, currentCoords)
                 Citizen.Wait(500)
-                TriggerServerEvent('drug_labs:server:requestAdminLabsForMenu', source) -- 'source' eshte nil ketu, duhet ta marrim ndryshe
-                                                                                     -- Ose thjesht te rifreskojme currentAdminLabsCache nga serveri
+                TriggerServerEvent('drug_labs:server:requestAdminLabsForMenu', source) 
             end
         },
         {
@@ -218,7 +216,7 @@ function AdminEditPositionsMenu(labId)
                 local currentCoords = GetEntityCoords(playerPed)
                 TriggerServerEvent('drug_labs:server:adminSetProcessPos', labId, currentCoords)
                 Citizen.Wait(500)
-                TriggerServerEvent('drug_labs:server:requestAdminLabsForMenu', source) -- 'source' eshte nil ketu
+                TriggerServerEvent('drug_labs:server:requestAdminLabsForMenu', source)
             end
         },
         {
@@ -234,4 +232,4 @@ function AdminEditPositionsMenu(labId)
         options = positionOptions
     })
     exports.ox_lib:showContext('drug_lab_admin_edit_positions_menu_' .. labId)
-end --- END OF FUNCTION ---
+end
