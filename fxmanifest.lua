@@ -26,7 +26,5 @@ client_scripts {
 dependencies {
     'ox_lib',
     'ox_target',
-    'ox_inventory',
-    --'qb-core',
-    'es_extended'
+    'ox_inventory'
 }
