@@ -15,5 +15,17 @@ CREATE TABLE IF NOT EXISTS `drug_labs` (
   `process_pos_x` FLOAT NOT NULL,
   `process_pos_y` FLOAT NOT NULL,
   `process_pos_z` FLOAT NOT NULL,
-  `keys` TEXT DEFAULT '[]'
+  `keys` TEXT DEFAULT '[]',
+  `mlo_pos_x` FLOAT DEFAULT 0,
+  `mlo_pos_y` FLOAT DEFAULT 0,
+  `mlo_pos_z` FLOAT DEFAULT 0,
+  `mlo_heading` FLOAT DEFAULT 0,
+  `mlo_enter_x` FLOAT DEFAULT 0,
+  `mlo_enter_y` FLOAT DEFAULT 0,
+  `mlo_enter_z` FLOAT DEFAULT 0,
+  `mlo_enter_h` FLOAT DEFAULT 0,
+  `mlo_exit_x` FLOAT DEFAULT 0,
+  `mlo_exit_y` FLOAT DEFAULT 0,
+  `mlo_exit_z` FLOAT DEFAULT 0,
+  `mlo_exit_h` FLOAT DEFAULT 0
 );
