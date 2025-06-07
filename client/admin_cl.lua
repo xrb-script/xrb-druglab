@@ -68,7 +68,6 @@ function AdminCreateLabPrompt()
 
                 TriggerServerEvent('drug_labs:server:adminCreateLab', {type = labType, price = price, coords = coords})
             elseif input == false then
-                
             elseif input == nil and timeout == 0 then
                 ShowNotification(nil, {description = "Input dialog timed out.", type = 'warning'})
             else
@@ -143,22 +142,57 @@ function AdminShowLabDetails(labId)
         {
             title = Strings['admin_delete_lab'],
             icon = 'fas fa-trash-alt',
-            color = 'red',
+            color = 'orange',
             onSelect = function()
                 Citizen.CreateThread(function()
                     local confirm = exports.ox_lib:alertDialog({
                         header = Strings['admin_delete_lab'],
                         content = Strings['admin_confirm_delete_lab']:format(labId),
-                        centered = true, cancel = true, type = 'error',
-                        labels = { confirm = "Yes, Delete", cancel = "No" }
+                        centered = true, cancel = true, type = 'warning',
+                        labels = { confirm = "Yes, Reset", cancel = "No" }
                     })
                     if confirm == "confirm" then
                         TriggerServerEvent('drug_labs:server:adminDeleteLab', labId)
                     end
                 end)
             end
+        },
+        {
+            title = "Delete Lab Permanently",
+            icon = 'fas fa-trash',
+            color = 'red',
+            onSelect = function()
+                Citizen.CreateThread(function()
+                    local confirm = exports.ox_lib:alertDialog({
+                        header = "Permanent Deletion",
+                        content = "Are you sure? This will completely remove the lab from the database!",
+                        centered = true, cancel = true, type = 'error',
+                        labels = { confirm = "Delete", cancel = "Cancel" }
+                    })
+                    if confirm == "confirm" then
+                        TriggerServerEvent('drug_labs:server:adminPermanentDeleteLab', labId)
+                    end
+                end)
+            end
         }
     }
+
+
+    table.insert(detailOptions, {
+        title = ("MLO Position: X:%.1f Y:%.1f Z:%.1f"):format(labData.mlo_pos_x or 0, labData.mlo_pos_y or 0, labData.mlo_pos_z or 0),
+        icon = 'fas fa-map-pin',
+        disabled = true
+    })
+    table.insert(detailOptions, {
+        title = ("Enter Position: X:%.1f Y:%.1f Z:%.1f"):format(labData.mlo_enter_x or 0, labData.mlo_enter_y or 0, labData.mlo_enter_z or 0),
+        icon = 'fas fa-sign-in-alt',
+        disabled = true
+    })
+    table.insert(detailOptions, {
+        title = ("Exit Position: X:%.1f Y:%.1f Z:%.1f"):format(labData.mlo_exit_x or 0, labData.mlo_exit_y or 0, labData.mlo_exit_z or 0),
+        icon = 'fas fa-sign-out-alt',
+        disabled = true
+    })
 
     table.insert(detailOptions, { title = Strings['admin_lab_keys_list'], icon = 'fas fa-key', disabled = true })
     if labData.keys and #labData.keys > 0 then
@@ -215,6 +249,45 @@ function AdminEditPositionsMenu(labId)
                 local playerPed = PlayerPedId()
                 local currentCoords = GetEntityCoords(playerPed)
                 TriggerServerEvent('drug_labs:server:adminSetProcessPos', labId, currentCoords)
+                Citizen.Wait(500)
+                TriggerServerEvent('drug_labs:server:requestAdminLabsForMenu', source)
+            end
+        },
+        {
+            title = "Set MLO Position (Current Location)",
+            description = "Sets main exterior position",
+            icon = 'fas fa-map-pin',
+            onSelect = function()
+                local playerPed = PlayerPedId()
+                local currentCoords = GetEntityCoords(playerPed)
+                local heading = GetEntityHeading(playerPed)
+                TriggerServerEvent('drug_labs:server:adminSetMloPos', labId, currentCoords, heading)
+                Citizen.Wait(500)
+                TriggerServerEvent('drug_labs:server:requestAdminLabsForMenu', source)
+            end
+        },
+        {
+            title = "Set Enter Lab Position (Current Location)",
+            description = "Sets the interior entrance position (where player enters the lab)",
+            icon = 'fas fa-door-open',
+            onSelect = function()
+                local playerPed = PlayerPedId()
+                local currentCoords = GetEntityCoords(playerPed)
+                local heading = GetEntityHeading(playerPed)
+                TriggerServerEvent('drug_labs:server:adminSetMloEnterPos', labId, currentCoords, heading)
+                Citizen.Wait(500)
+                TriggerServerEvent('drug_labs:server:requestAdminLabsForMenu', source)
+            end
+        },
+        {
+            title = "Set Exit Lab Position (Current Location)",
+            description = "Sets the exterior exit position (where player exits the lab)",
+            icon = 'fas fa-door-open',
+            onSelect = function()
+                local playerPed = PlayerPedId()
+                local currentCoords = GetEntityCoords(playerPed)
+                local heading = GetEntityHeading(playerPed)
+                TriggerServerEvent('drug_labs:server:adminSetMloExitPos', labId, currentCoords, heading)
                 Citizen.Wait(500)
                 TriggerServerEvent('drug_labs:server:requestAdminLabsForMenu', source)
             end
