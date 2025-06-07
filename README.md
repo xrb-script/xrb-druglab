@@ -34,3 +34,9 @@ https://github.com/xrb-script/cokemethweed-MLO
     *   The core logic is adapted to work with both frameworks, configured via `Config.Framework`.
 *   **Database:** Uses a single table (`drug_labs`) to store all lab information.
 *   **Notifications and Blips:** Provides notifications for various actions and map blips to indicate lab locations and statuses (owned, unowned, keyed).
+
+![Screenshot_6](https://github.com/user-attachments/assets/c29ce96d-2b79-4f74-980e-5284414c9399)
+![Screenshot_5](https://github.com/user-attachments/assets/f7432578-4ce4-49d7-afa5-09c0e783a96c)
+![Screenshot_4](https://github.com/user-attachments/assets/122600a4-dac9-450d-90e8-2695275d307c)
+
+
