@@ -1,10 +1,10 @@
-
 local PlayerData = {}
 local CurrentLabs = {}
 local PlayerLoaded = false
 local MyIdentifier = nil
 local MyMoney = 0
 local isProcessingDrug = false
+local insideLab = {}
 
 Citizen.CreateThread(function()
     if Config.Framework == "ESX" then
@@ -80,6 +80,8 @@ AddEventHandler('drug_labs:client:updateLabState', function(labId, labData)
             exports.ox_target:removeZone('drug_lab_main_' .. labId)
             exports.ox_target:removeZone('drug_lab_stash_' .. labId)
             exports.ox_target:removeZone('drug_lab_process_' .. labId)
+            exports.ox_target:removeZone('drug_lab_enter_' .. labId)
+            exports.ox_target:removeZone('drug_lab_exit_' .. labId)
             CurrentLabs[labId] = nil
         end
         return
@@ -97,6 +99,8 @@ function CreateBlipsAndTargets()
         exports.ox_target:removeZone('drug_lab_main_' .. id)
         exports.ox_target:removeZone('drug_lab_stash_' .. id)
         exports.ox_target:removeZone('drug_lab_process_' .. id)
+        exports.ox_target:removeZone('drug_lab_enter_' .. id)
+        exports.ox_target:removeZone('drug_lab_exit_' .. id)
     end
 
     for id, lab in pairs(CurrentLabs) do
@@ -119,7 +123,13 @@ end
 function CreateBlipForLab(id, lab)
     if not PlayerLoaded or not lab then return end
 
-    local blipCoord = vec3(lab.pos_x, lab.pos_y, lab.pos_z)
+    local blipCoord
+    if lab.mlo_pos_x and lab.mlo_pos_x ~= 0 then
+        blipCoord = vec3(lab.mlo_pos_x, lab.mlo_pos_y, lab.mlo_pos_z)
+    else
+        blipCoord = vec3(lab.pos_x, lab.pos_y, lab.pos_z)
+    end
+
     if lab.blip and DoesBlipExist(lab.blip) then RemoveBlip(lab.blip) end
 
     local newBlip = AddBlipForCoord(blipCoord.x, blipCoord.y, blipCoord.z)
@@ -167,10 +177,23 @@ function CreateOrUpdateLabTarget(labId, labData)
     local mainTargetName = 'drug_lab_main_' .. labId
     local stashTargetName = 'drug_lab_stash_' .. labId
     local processTargetName = 'drug_lab_process_' .. labId
+    local enterTargetName = 'drug_lab_enter_' .. labId
+    local exitTargetName = 'drug_lab_exit_' .. labId
 
     exports.ox_target:removeZone(mainTargetName)
     exports.ox_target:removeZone(stashTargetName)
     exports.ox_target:removeZone(processTargetName)
+    exports.ox_target:removeZone(enterTargetName)
+    exports.ox_target:removeZone(exitTargetName)
+
+    local mainCoords, mainHeading
+    if labData.mlo_pos_x and labData.mlo_pos_x ~= 0 then
+        mainCoords = vec3(labData.mlo_pos_x, labData.mlo_pos_y, labData.mlo_pos_z)
+        mainHeading = labData.mlo_heading or 0
+    else
+        mainCoords = vec3(labData.pos_x, labData.pos_y, labData.pos_z)
+        mainHeading = 0
+    end
 
     local hasKeyAccess = function()
         if not labData.keys then return false end
@@ -189,6 +212,15 @@ function CreateOrUpdateLabTarget(labId, labData)
             canInteract = function() return not labData.owner_identifier and MyMoney >= labData.price end
         })
     elseif labData.owner_identifier == MyIdentifier then
+        if labData.mlo_enter_x and labData.mlo_enter_x ~= 0 then
+            table.insert(mainOptions, {
+                icon = 'fas fa-door-open',
+                label = "Enter Lab",
+                onSelect = function() EnterLab(labId) end,
+                canInteract = function() return labData.owner_identifier == MyIdentifier end
+            })
+        end
+        
         table.insert(mainOptions, {
             icon = drugConfig.target_icon or Config.TargetIcon,
             label = Strings['lab_manage_prompt']:format(drugConfig.label),
@@ -196,7 +228,16 @@ function CreateOrUpdateLabTarget(labId, labData)
             canInteract = function() return labData.owner_identifier == MyIdentifier end
         })
     elseif hasKeyAccess() then
-         table.insert(mainOptions, {
+        if labData.mlo_enter_x and labData.mlo_enter_x ~= 0 then
+            table.insert(mainOptions, {
+                icon = 'fas fa-door-open',
+                label = "Enter Lab",
+                onSelect = function() EnterLab(labId) end,
+                canInteract = function() return hasKeyAccess() end
+            })
+        end
+        
+        table.insert(mainOptions, {
             icon = drugConfig.target_icon or Config.TargetIcon,
             label = Strings['lab_access_prompt']:format(drugConfig.label),
             onSelect = function() OpenKeyHolderMenu(labId) end,
@@ -209,21 +250,35 @@ function CreateOrUpdateLabTarget(labId, labData)
             canInteract = function() return false end
         })
     end
-  --  table.insert(mainOptions, {
-     --   icon = 'fas fa-info-circle',
-     --   label = Strings['lab_info'],
-     --   onSelect = function() ShowLabInfo(labId) end
- --   })
 
     exports.ox_target:addBoxZone({
         name = mainTargetName,
-        coords = vec3(labData.pos_x, labData.pos_y, labData.pos_z),
+        coords = mainCoords,
         size = Config.TargetBoxZoneSize,
-        rotation = 0,
+        rotation = mainHeading,
         debug = false,
         options = mainOptions,
         distance = Config.TargetDistance
     })
+
+
+    if labData.mlo_exit_x and labData.mlo_exit_x ~= 0 then
+        exports.ox_target:addBoxZone({
+            name = exitTargetName,
+            coords = vec3(labData.mlo_exit_x, labData.mlo_exit_y, labData.mlo_exit_z),
+            size = Config.TargetBoxZoneSize,
+            rotation = labData.mlo_exit_h or 0,
+            debug = false,
+            options = {
+                {
+                    icon = 'fas fa-door-open',
+                    label = "Exit Lab",
+                    onSelect = function() ExitLab(labId) end
+                }
+            },
+            distance = Config.TargetDistance
+        })
+    end
 
     if labData.owner_identifier == MyIdentifier or hasKeyAccess() then
         exports.ox_target:addBoxZone({
@@ -268,6 +323,48 @@ function CreateOrUpdateLabTarget(labId, labData)
     end
 end 
 
+function EnterLab(labId)
+    local lab = CurrentLabs[labId]
+    if not lab then return end
+    
+    if lab.mlo_enter_x and lab.mlo_enter_x ~= 0 then
+        DoScreenFadeOut(500)
+        while not IsScreenFadedOut() do Citizen.Wait(10) end
+        
+        SetEntityCoords(PlayerPedId(), lab.mlo_enter_x, lab.mlo_enter_y, lab.mlo_enter_z, false, false, false, false)
+        SetEntityHeading(PlayerPedId(), lab.mlo_enter_h or 0)
+        
+        insideLab[labId] = true
+        Citizen.Wait(500)
+        DoScreenFadeIn(1000)
+        
+        ShowNotification(nil, {description = "You entered the lab", type = 'inform'})
+    else
+        ShowNotification(nil, {description = "This lab has no interior setup", type = 'error'})
+    end
+end
+
+function ExitLab(labId)
+    local lab = CurrentLabs[labId]
+    if not lab then return end
+    
+    if lab.mlo_pos_x and lab.mlo_pos_x ~= 0 then
+        DoScreenFadeOut(500)
+        while not IsScreenFadedOut() do Citizen.Wait(10) end
+        
+        SetEntityCoords(PlayerPedId(), lab.mlo_pos_x, lab.mlo_pos_y, lab.mlo_pos_z, false, false, false, false)
+        SetEntityHeading(PlayerPedId(), lab.mlo_heading or 0)
+        
+        insideLab[labId] = nil
+        Citizen.Wait(500)
+        DoScreenFadeIn(1000)
+        
+        ShowNotification(nil, {description = "You exited the lab", type = 'inform'})
+    else
+        ShowNotification(nil, {description = "Exit position not set", type = 'error'})
+    end
+end
+
 function BuyLab(labId, price)
     local lab = CurrentLabs[labId]
     if not lab then ShowNotification(nil, {description = "Lab data not found.", type = 'error'}); return end
@@ -289,7 +386,6 @@ function OpenOwnerMenu(labId)
     local drugConfig = Config.DrugTypes[lab.type]
     local options = {
         { title = drugConfig.label .. " - Owner Menu", icon = drugConfig.target_icon or Config.TargetIcon, disabled = true },
-       -- { title = Strings['lab_stash_prompt'], icon = 'fas fa-archive', onSelect = function() OpenStashMenu(labId) end },
         { title = Strings['keys_title'], icon = 'fas fa-key', onSelect = function() ManageKeysMenu(labId) end },
         {
             title = ("Sell Lab (for $%s)"):format(math.floor(lab.price * Config.SellBackPercentage)),
@@ -321,8 +417,6 @@ function OpenKeyHolderMenu(labId)
     local drugConfig = Config.DrugTypes[lab.type]
     local options = {
         { title = drugConfig.label .. " - Key Access", icon = drugConfig.target_icon or Config.TargetIcon, disabled = true, },
-      -- { title = Strings['lab_stash_prompt'], icon = 'fas fa-archive', onSelect = function() OpenStashMenu(labId) end },
-      --  { title = Strings['lab_info'], icon = 'fas fa-info-circle', onSelect = function() ShowLabInfo(labId) end }
     }
     exports.ox_lib:registerContext({
         id = 'drug_lab_keyholder_menu_' .. labId,
@@ -344,11 +438,12 @@ function ShowLabInfo(labId)
         keyHoldersText = "None"
     end
     local content = string.format(
-        "**Type:** %s\n**Owner:** %s\n**Raw %s:** %s\n**Packaged %s:** %s\n**Keys (%s/%s):** %s",
+        "**Type:** %s\n**Owner:** %s\n**Raw %s:** %s\n**Packaged %s:** %s\n**Keys (%s/%s):** %s\n**Interior Set:** %s",
         drugConfig.label, lab.owner_name or "Unowned",
         drugConfig.raw_item, lab.stock_raw,
         drugConfig.packaged_item, lab.stock_packaged,
-        #lab.keys, Config.MaxKeysPerLab, keyHoldersText
+        #lab.keys, Config.MaxKeysPerLab, keyHoldersText,
+        (lab.mlo_enter_x and lab.mlo_enter_x ~= 0) and "Yes" or "No"
     )
     exports.ox_lib:alertDialog({
         header = Strings['lab_info'] .. " - " .. drugConfig.label,
@@ -384,7 +479,6 @@ function ManageKeysMenu(labId)
                 if targetIdInput and type(targetIdInput) == 'table' and targetIdInput[1] ~= nil and tostring(targetIdInput[1]) ~= '' then
                     TriggerServerEvent('drug_labs:server:giveKey', labId, tonumber(targetIdInput[1]))
                 elseif targetIdInput == false then
-                    -- User cancelled
                 else
                     ShowNotification(nil, {description = Strings['invalid_input'], type = 'error'})
                 end
@@ -537,6 +631,8 @@ AddEventHandler('onResourceStop', function(resourceName)
             exports.ox_target:removeZone('drug_lab_main_' .. id)
             exports.ox_target:removeZone('drug_lab_stash_' .. id)
             exports.ox_target:removeZone('drug_lab_process_' .. id)
+            exports.ox_target:removeZone('drug_lab_enter_' .. id)
+            exports.ox_target:removeZone('drug_lab_exit_' .. id)
         end
         CurrentLabs = {}
         print("[xrb-DrugLabs] Client script (Player Module) stopped, cleaned up blips and targets.")
@@ -564,4 +660,4 @@ function ShowNotification(source, data)
             if QBCore then QBCore.Functions.Notify(data.description or "Notification", data.type or "primary", 5000) end
         end
     end
-end 
+end
