@@ -43,15 +43,19 @@ RegisterNetEvent('drug_labs:server:adminCreateLab', function(labDetails)
     local processOffset = vec3(-1.0, 1.0, 0.0)
     local stashCoords = coords + stashOffset
     local processCoords = coords + processOffset
+    local heading = GetEntityHeading(GetPlayerPed(src))
 
     MySQL.Async.insert(
-        'INSERT INTO drug_labs (type, price, pos_x, pos_y, pos_z, stash_pos_x, stash_pos_y, stash_pos_z, process_pos_x, process_pos_y, process_pos_z, `keys`) VALUES (@type, @price, @px, @py, @pz, @sx, @sy, @sz, @prx, @pry, @prz, @keys)',
+        'INSERT INTO drug_labs (type, price, pos_x, pos_y, pos_z, stash_pos_x, stash_pos_y, stash_pos_z, process_pos_x, process_pos_y, process_pos_z, `keys`, mlo_pos_x, mlo_pos_y, mlo_pos_z, mlo_heading, mlo_enter_x, mlo_enter_y, mlo_enter_z, mlo_enter_h, mlo_exit_x, mlo_exit_y, mlo_exit_z, mlo_exit_h) VALUES (@type, @price, @px, @py, @pz, @sx, @sy, @sz, @prx, @pry, @prz, @keys, @mlox, @mloy, @mloz, @mloh, @enterx, @entery, @enterz, @enterh, @exitx, @exity, @exitz, @exith)',
         {
             ['@type'] = labType, ['@price'] = price,
             ['@px'] = coords.x, ['@py'] = coords.y, ['@pz'] = coords.z,
             ['@sx'] = stashCoords.x, ['@sy'] = stashCoords.y, ['@sz'] = stashCoords.z,
             ['@prx'] = processCoords.x, ['@pry'] = processCoords.y, ['@prz'] = processCoords.z,
-            ['@keys'] = json.encode({})
+            ['@keys'] = json.encode({}),
+            ['@mlox'] = coords.x, ['@mloy'] = coords.y, ['@mloz'] = coords.z, ['@mloh'] = heading,
+            ['@enterx'] = 0, ['@entery'] = 0, ['@enterz'] = 0, ['@enterh'] = 0,
+            ['@exitx'] = 0, ['@exity'] = 0, ['@exitz'] = 0, ['@exith'] = 0
         },
         function(newLabId)
             if newLabId then
@@ -86,6 +90,25 @@ RegisterNetEvent('drug_labs:server:adminDeleteLab', function(labId)
                 UpdateAndBroadcastLabChange(labId)
             else
                 ShowNotification(src, {description = "Database error deleting lab.", type = 'error'})
+            end
+        end
+    )
+end)
+
+RegisterNetEvent('drug_labs:server:adminPermanentDeleteLab', function(labId)
+    local src = source
+    if not HasAdminPermission(src) then return end
+
+    MySQL.Async.execute(
+        'DELETE FROM drug_labs WHERE id = @labId',
+        { ['@labId'] = labId },
+        function(affectedRows)
+            if affectedRows > 0 then
+                _G.ActiveDrugLabs[labId] = nil
+                TriggerClientEvent('drug_labs:client:updateLabState', -1, labId, nil)
+                ShowNotification(src, {description = "Lab ID " .. labId .. " permanently deleted", type = 'success'})
+            else
+                ShowNotification(src, {description = "Error deleting lab", type = 'error'})
             end
         end
     )
@@ -158,6 +181,68 @@ RegisterNetEvent('drug_labs:server:adminSetProcessPos', function(labId, newCoord
                 UpdateAndBroadcastLabChange(labId)
             else
                 ShowNotification(src, {description = Strings['admin_error_updating_pos']:format(labId), type = 'error'})
+            end
+        end
+    )
+end)
+
+RegisterNetEvent('drug_labs:server:adminSetMloEnterPos', function(labId, newCoords, newHeading)
+    local src = source
+    if not HasAdminPermission(src) then return end
+    if not _G.ActiveDrugLabs or not _G.ActiveDrugLabs[labId] then
+        ShowNotification(src, {description = "Lab not found.", type = 'error'})
+        return
+    end
+
+    local lab = _G.ActiveDrugLabs[labId]
+    lab.mlo_enter_x = newCoords.x
+    lab.mlo_enter_y = newCoords.y
+    lab.mlo_enter_z = newCoords.z
+    lab.mlo_enter_h = newHeading
+
+    MySQL.Async.execute(
+        'UPDATE drug_labs SET mlo_enter_x = @x, mlo_enter_y = @y, mlo_enter_z = @z, mlo_enter_h = @h WHERE id = @labId',
+        {
+            ['@x'] = lab.mlo_enter_x, ['@y'] = lab.mlo_enter_y, ['@z'] = lab.mlo_enter_z,
+            ['@h'] = lab.mlo_enter_h, ['@labId'] = labId
+        },
+        function(affectedRows)
+            if affectedRows > 0 then
+                ShowNotification(src, {description = "Enter position updated for Lab ID " .. labId, type = 'success'})
+                UpdateAndBroadcastLabChange(labId)
+            else
+                ShowNotification(src, {description = "Error updating enter position.", type = 'error'})
+            end
+        end
+    )
+end)
+
+RegisterNetEvent('drug_labs:server:adminSetMloExitPos', function(labId, newCoords, newHeading)
+    local src = source
+    if not HasAdminPermission(src) then return end
+    if not _G.ActiveDrugLabs or not _G.ActiveDrugLabs[labId] then
+        ShowNotification(src, {description = "Lab not found.", type = 'error'})
+        return
+    end
+
+    local lab = _G.ActiveDrugLabs[labId]
+    lab.mlo_exit_x = newCoords.x
+    lab.mlo_exit_y = newCoords.y
+    lab.mlo_exit_z = newCoords.z
+    lab.mlo_exit_h = newHeading
+
+    MySQL.Async.execute(
+        'UPDATE drug_labs SET mlo_exit_x = @x, mlo_exit_y = @y, mlo_exit_z = @z, mlo_exit_h = @h WHERE id = @labId',
+        {
+            ['@x'] = lab.mlo_exit_x, ['@y'] = lab.mlo_exit_y, ['@z'] = lab.mlo_exit_z,
+            ['@h'] = lab.mlo_exit_h, ['@labId'] = labId
+        },
+        function(affectedRows)
+            if affectedRows > 0 then
+                ShowNotification(src, {description = "Exit position updated for Lab ID " .. labId, type = 'success'})
+                UpdateAndBroadcastLabChange(labId)
+            else
+                ShowNotification(src, {description = "Error updating exit position.", type = 'error'})
             end
         end
     )
