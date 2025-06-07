@@ -208,7 +208,7 @@ RegisterNetEvent('drug_labs:server:sellLab', function(labId)
     )
 end)
 
--- GIVE KEY
+
 RegisterNetEvent('drug_labs:server:giveKey', function(labId, targetPlayerServerId)
     local src = source
     local ownerIdentifier = GetPlayerIdentifier(src)
@@ -249,7 +249,7 @@ RegisterNetEvent('drug_labs:server:giveKey', function(labId, targetPlayerServerI
     )
 end)
 
--- REVOKE KEY
+
 function RevokeKeyInternal(labId, keyHolderIdentifierToRevoke, revokerSource)
     local lab = _G.ActiveDrugLabs[labId]
     if not lab then
@@ -308,7 +308,7 @@ RegisterNetEvent('drug_labs:server:revokeKey', function(labId, keyHolderIdentifi
     RevokeKeyInternal(labId, keyHolderIdentifierToRevoke, src)
 end)
 
--- STASH AND PROCESSING
+
 RegisterNetEvent('drug_labs:server:addRawToStash', function(labId, itemName, itemCount)
     local src = source
     itemCount = tonumber(itemCount)
