@@ -101,9 +101,9 @@ Strings = {
     ['admin_lab_keys_list'] = "Keyholders:",
     ['admin_lab_no_keys'] = "No keyholders.",
     ['admin_revoke_key_from'] = "Revoke key from %s",
-    ['admin_delete_lab'] = "Delete Lab (Reset)",
-    ['admin_confirm_delete_lab'] = "Are you sure you want to delete/reset Lab ID %s? This will make it unowned and clear its stock.",
-    ['admin_lab_deleted'] = "Lab ID %s has been deleted/reset.",
+    ['admin_delete_lab'] = "Reset Lab",
+    ['admin_confirm_delete_lab'] = "Are you sure you want to reset Lab ID %s? This will make it unowned and clear its stock.",
+    ['admin_lab_deleted'] = "Lab ID %s has been reset.",
     ['admin_must_be_admin'] = "You must be an admin to use this command.",
     ['admin_invalid_lab_type'] = "Invalid lab type. Valid types: %s",
     ['admin_error_creating_lab'] = "Error creating lab in database.",
@@ -113,6 +113,37 @@ Strings = {
     ['admin_pos_updated_stash'] = "Stash position updated for Lab ID %s.",
     ['admin_pos_updated_process'] = "Process position updated for Lab ID %s.",
     ['admin_error_updating_pos'] = "Error updating position for Lab ID %s.",
+    
+ 
+    ['admin_set_mlo_pos'] = "Set MLO Position (Current Location)",
+    ['admin_set_mlo_enter_pos'] = "Set Enter Lab Position (Inside MLO)",
+    ['admin_set_mlo_exit_pos'] = "Set Exit Lab Position (Outside MLO)",
+    ['admin_pos_updated_mlo'] = "MLO position updated for Lab ID %s.",
+    ['admin_pos_updated_enter'] = "Enter position updated for Lab ID %s.",
+    ['admin_pos_updated_exit'] = "Exit position updated for Lab ID %s.",
+    ['admin_mlo_pos'] = "MLO Position: X:%.1f Y:%.1f Z:%.1f",
+    ['admin_enter_pos'] = "Enter Position: X:%.1f Y:%.1f Z:%.1f",
+    ['admin_exit_pos'] = "Exit Position: X:%.1f Y:%.1f Z:%.1f",
+    ['admin_interior_not_set'] = "Interior not configured",
+    
+   
+    ['entering_lab'] = "Entering lab...",
+    ['exiting_lab'] = "Exiting lab...",
+    ['lab_entered'] = "You entered the lab",
+    ['lab_exited'] = "You exited the lab",
+    ['lab_no_interior'] = "This lab has no interior setup",
+    ['lab_enter_fail'] = "Failed to enter lab",
+    ['lab_exit_fail'] = "Failed to exit lab",
+    
+
+    ['admin_permanent_delete'] = "Delete Lab Permanently",
+    ['admin_confirm_permanent_delete'] = "Are you sure you want to permanently delete Lab ID %s? This cannot be undone!",
+    ['admin_permanent_delete_success'] = "Lab ID %s has been permanently deleted.",
+    ['admin_permanent_delete_fail'] = "Failed to delete lab",
+    
+
+    ['key_given_notification'] = "You gave a key for lab %s to player %s",
+    ['key_received_notification'] = "You received a key for lab %s from %s"
 }
 
 function ShowNotification(source, data)
