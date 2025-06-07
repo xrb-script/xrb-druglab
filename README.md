@@ -28,6 +28,8 @@ https://github.com/xrb-script/cokemethweed-MLO
     *   **View and Manage Active Labs:** Admins can see a list of all labs, their details (owner, stock), who has keys, and can delete/reset labs.
     *   **Revoke Keys (by Admin):** Admins can remove any player's key from any lab.
     *   **Edit Stash/Process Positions:** Admins can reposition the Stash and Process interaction points for any existing lab.
+    *   **Edit MLO Location:** The admin can set the Lab coordinates for each Lab he creates, the Entry, the Exit
+
 *   **Framework Compatibility (ESX/QBCore):**
     *   The core logic is adapted to work with both frameworks, configured via `Config.Framework`.
 *   **Database:** Uses a single table (`drug_labs`) to store all lab information.
