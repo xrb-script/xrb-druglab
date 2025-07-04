@@ -122,6 +122,8 @@ end
 
 function CreateBlipForLab(id, lab)
     if not PlayerLoaded or not lab then return end
+    
+    if not Config.ShowBlips then return end
 
     local blipCoord
     if lab.mlo_pos_x and lab.mlo_pos_x ~= 0 then
