@@ -8,6 +8,7 @@ Config.ManualProcessTime = 5000 -- ms
 Config.MaxKeysPerLab = 5
 Config.SellBackPercentage = 0.7
 
+Config.ShowBlips = false
 Config.BlipSprite = 474
 Config.BlipColorOwned = 2
 Config.BlipColorUnowned = 1
