@@ -403,7 +403,6 @@ RegisterNetEvent('drug_labs:server:manualProcess', function(labId)
     local drugInfo = Config.DrugTypes[lab.type]
     if not drugInfo then ShowNotification(src, {description = "Lab type config error.", type = 'error'}); TriggerClientEvent('drug_labs:client:processFinished', src, false); return end
 
-    -- Përpunimi manual - vetëm një batch
     local packagesCreated = 1
     local rawConsumed = Config.RawPerPackage
 
