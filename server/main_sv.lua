@@ -114,10 +114,6 @@ function UpdateAndBroadcastLabChange(labId)
     else
         TriggerClientEvent('drug_labs:client:updateLabState', -1, labId, nil)
     end
-    local admin = GetAdminSourceIfAny() 
-    if admin then
-        TriggerClientEvent('drug_labs:client:openAdminMenu', admin, _G.ActiveDrugLabs) 
-    end
 end
 
 Citizen.CreateThread(function()
@@ -391,16 +387,27 @@ RegisterNetEvent('drug_labs:server:manualProcess', function(labId)
 
     if not lab then ShowNotification(src, {description = "Lab not found.", type = 'error'}); TriggerClientEvent('drug_labs:client:processFinished', src, false); return end
     if lab.owner_identifier ~= playerIdentifier and not (table.find(lab.keys or {}, playerIdentifier)) then ShowNotification(src, {description = Strings['not_owner_or_keyholder'], type = 'error'}); TriggerClientEvent('drug_labs:client:processFinished', src, false); return end
-    if lab.stock_raw <= 0 then ShowNotification(src, {description = Strings['not_enough_raw'], type = 'error'}); TriggerClientEvent('drug_labs:client:processFinished', src, false); return end
-    if lab.stock_raw >= Config.AutoProcessThreshold then ShowNotification(src, {description = "System will auto-process.", type = 'inform'}); TriggerClientEvent('drug_labs:client:processFinished', src, false); return end
+    
+    if lab.stock_raw < Config.RawPerPackage then 
+        ShowNotification(src, {description = Strings['not_enough_raw'], type = 'error'}); 
+        TriggerClientEvent('drug_labs:client:processFinished', src, false); 
+        return 
+    end
+    
+    if lab.stock_raw >= Config.AutoProcessThreshold then 
+        ShowNotification(src, {description = "System will auto-process.", type = 'inform'}); 
+        TriggerClientEvent('drug_labs:client:processFinished', src, false); 
+        return 
+    end
 
     local drugInfo = Config.DrugTypes[lab.type]
     if not drugInfo then ShowNotification(src, {description = "Lab type config error.", type = 'error'}); TriggerClientEvent('drug_labs:client:processFinished', src, false); return end
 
-    local packagesCreated = math.floor(lab.stock_raw / Config.RawPerPackage)
-    local rawConsumed = packagesCreated * Config.RawPerPackage
+    -- Përpunimi manual - vetëm një batch
+    local packagesCreated = 1
+    local rawConsumed = Config.RawPerPackage
 
-    if packagesCreated > 0 then
+    if lab.stock_raw >= rawConsumed then
         local originalRaw = lab.stock_raw
         local originalPackaged = lab.stock_packaged
         lab.stock_raw = lab.stock_raw - rawConsumed
@@ -413,6 +420,8 @@ RegisterNetEvent('drug_labs:server:manualProcess', function(labId)
                     ShowNotification(src, {description = Strings['drugs_processed']:format(rawConsumed, drugInfo.raw_item, packagesCreated, drugInfo.packaged_item), type = 'success'})
                     UpdateAndBroadcastLabChange(labId)
                     TriggerClientEvent('drug_labs:client:processFinished', src, true)
+                    
+                    CheckAndAutoProcess(labId)
                 else
                     lab.stock_raw = originalRaw
                     lab.stock_packaged = originalPackaged
@@ -545,4 +554,30 @@ function GetAdminSourceIfAny()
         end
     end
     return nil
+end
+
+RegisterCommand(Config.AdminCommand, function(source, args, rawCommand)
+    if HasAdminPermission(source) then
+        TriggerClientEvent('drug_labs:client:openAdminMenu', source, _G.ActiveDrugLabs)
+    else
+        ShowNotification(source, {description = Strings['admin_must_be_admin'], type = 'error'})
+    end
+end, false)
+
+function HasAdminPermission(source)
+    if Config.Framework == "ESX" then
+        local xPlayer = ESX.GetPlayerFromId(source)
+        return xPlayer and (xPlayer.getGroup() == Config.AdminPermission or xPlayer.getGroup() == "superadmin")
+    elseif Config.Framework == "QB" then
+        return QBCore.Functions.HasPermission(source, Config.AdminPermission)
+    end
+    return false
+end
+
+function ShowNotification(source, data)
+    if type(data) == 'string' then
+        data = { title = 'Drug Lab', description = data, type = 'inform', duration = 5000 }
+    end
+    data.duration = data.duration or 5000
+    TriggerClientEvent('ox_lib:notify', source, data)
 end
