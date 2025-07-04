@@ -173,6 +173,7 @@ end
 
 function CreateOrUpdateLabTarget(labId, labData)
     if not PlayerLoaded or not labData then return end
+    
     local drugConfig = Config.DrugTypes[labData.type]
     if not drugConfig then print(("[xrb-DrugLabs] Error: Missing drugConfig for type '%s' on lab ID %s"):format(labData.type, labId)); return end
 
@@ -313,11 +314,14 @@ function CreateOrUpdateLabTarget(labId, labData)
                     onSelect = function() ManualProcess(labId) end,
                     canInteract = function()
                         return (labData.owner_identifier == MyIdentifier or hasKeyAccess()) and
-                               labData.stock_raw > 0 and
+                               labData.stock_raw >= Config.RawPerPackage and
                                labData.stock_raw < Config.AutoProcessThreshold
                     end,
-                    disabled = not ((labData.owner_identifier == MyIdentifier or hasKeyAccess()) and labData.stock_raw > 0 and labData.stock_raw < Config.AutoProcessThreshold),
-                    description = labData.stock_raw == 0 and Strings['not_enough_raw'] or (labData.stock_raw >= Config.AutoProcessThreshold and "Auto-processing active" or nil)
+                    disabled = not ((labData.owner_identifier == MyIdentifier or hasKeyAccess()) and 
+                                   labData.stock_raw >= Config.RawPerPackage and 
+                                   labData.stock_raw < Config.AutoProcessThreshold),
+                    description = labData.stock_raw < Config.RawPerPackage and Strings['not_enough_raw'] or 
+                                (labData.stock_raw >= Config.AutoProcessThreshold and "Auto-processing active" or nil)
                 }
             },
             distance = Config.TargetDistance
@@ -607,6 +611,17 @@ function ManualProcess(labId)
         ShowNotification(nil, {description = "Lab data not found.", type = 'error'})
         return 
     end
+    
+    if lab.stock_raw < Config.RawPerPackage then
+        ShowNotification(nil, {description = Strings['not_enough_raw'], type = 'error'})
+        return
+    end
+    
+    if lab.stock_raw >= Config.AutoProcessThreshold then
+        ShowNotification(nil, {description = "System will auto-process.", type = 'inform'})
+        return
+    end
+    
     isProcessingDrug = true
     local drugConfig = Config.DrugTypes[lab.type]
 
@@ -624,7 +639,7 @@ function ManualProcess(labId)
         isProcessingDrug = false
         ShowNotification(nil, {description = "Processing cancelled.", type = 'warning'})
     end
-end --
+end
 
 AddEventHandler('onResourceStop', function(resourceName)
     if GetCurrentResourceName() == resourceName then
