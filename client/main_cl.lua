@@ -5,6 +5,13 @@ local MyIdentifier = nil
 local MyMoney = 0
 local isProcessingDrug = false
 local insideLab = {}
+local registeredLabZones = {}
+
+local function RemoveLabTargetZone(name)
+    if not registeredLabZones[name] then return end
+    exports.ox_target:removeZone(name)
+    registeredLabZones[name] = nil
+end
 
 Citizen.CreateThread(function()
     if Config.Framework == "ESX" then
@@ -77,11 +84,11 @@ AddEventHandler('drug_labs:client:updateLabState', function(labId, labData)
     if not labData then
         if CurrentLabs[labId] then
             if CurrentLabs[labId].blip and DoesBlipExist(CurrentLabs[labId].blip) then RemoveBlip(CurrentLabs[labId].blip) end
-            exports.ox_target:removeZone('drug_lab_main_' .. labId)
-            exports.ox_target:removeZone('drug_lab_stash_' .. labId)
-            exports.ox_target:removeZone('drug_lab_process_' .. labId)
-            exports.ox_target:removeZone('drug_lab_enter_' .. labId)
-            exports.ox_target:removeZone('drug_lab_exit_' .. labId)
+            RemoveLabTargetZone('drug_lab_main_' .. labId)
+            RemoveLabTargetZone('drug_lab_stash_' .. labId)
+            RemoveLabTargetZone('drug_lab_process_' .. labId)
+            RemoveLabTargetZone('drug_lab_enter_' .. labId)
+            RemoveLabTargetZone('drug_lab_exit_' .. labId)
             CurrentLabs[labId] = nil
         end
         return
@@ -96,11 +103,11 @@ end)
 function CreateBlipsAndTargets()
     for id, lab in pairs(CurrentLabs) do
         if lab and lab.blip and DoesBlipExist(lab.blip) then RemoveBlip(lab.blip); lab.blip = nil; end
-        exports.ox_target:removeZone('drug_lab_main_' .. id)
-        exports.ox_target:removeZone('drug_lab_stash_' .. id)
-        exports.ox_target:removeZone('drug_lab_process_' .. id)
-        exports.ox_target:removeZone('drug_lab_enter_' .. id)
-        exports.ox_target:removeZone('drug_lab_exit_' .. id)
+        RemoveLabTargetZone('drug_lab_main_' .. id)
+        RemoveLabTargetZone('drug_lab_stash_' .. id)
+        RemoveLabTargetZone('drug_lab_process_' .. id)
+        RemoveLabTargetZone('drug_lab_enter_' .. id)
+        RemoveLabTargetZone('drug_lab_exit_' .. id)
     end
 
     for id, lab in pairs(CurrentLabs) do
@@ -183,11 +190,11 @@ function CreateOrUpdateLabTarget(labId, labData)
     local enterTargetName = 'drug_lab_enter_' .. labId
     local exitTargetName = 'drug_lab_exit_' .. labId
 
-    exports.ox_target:removeZone(mainTargetName)
-    exports.ox_target:removeZone(stashTargetName)
-    exports.ox_target:removeZone(processTargetName)
-    exports.ox_target:removeZone(enterTargetName)
-    exports.ox_target:removeZone(exitTargetName)
+    RemoveLabTargetZone(mainTargetName)
+    RemoveLabTargetZone(stashTargetName)
+    RemoveLabTargetZone(processTargetName)
+    RemoveLabTargetZone(enterTargetName)
+    RemoveLabTargetZone(exitTargetName)
 
     local mainCoords, mainHeading
     if labData.mlo_pos_x and labData.mlo_pos_x ~= 0 then
@@ -263,6 +270,7 @@ function CreateOrUpdateLabTarget(labId, labData)
         options = mainOptions,
         distance = Config.TargetDistance
     })
+    registeredLabZones[mainTargetName] = true
 
 
     if labData.mlo_exit_x and labData.mlo_exit_x ~= 0 then
@@ -281,6 +289,7 @@ function CreateOrUpdateLabTarget(labId, labData)
             },
             distance = Config.TargetDistance
         })
+        registeredLabZones[exitTargetName] = true
     end
 
     if labData.owner_identifier == MyIdentifier or hasKeyAccess() then
@@ -300,6 +309,7 @@ function CreateOrUpdateLabTarget(labId, labData)
             },
             distance = Config.TargetDistance
         })
+        registeredLabZones[stashTargetName] = true
 
         exports.ox_target:addBoxZone({
             name = processTargetName,
@@ -326,6 +336,7 @@ function CreateOrUpdateLabTarget(labId, labData)
             },
             distance = Config.TargetDistance
         })
+        registeredLabZones[processTargetName] = true
     end
 end 
 
@@ -645,11 +656,11 @@ AddEventHandler('onResourceStop', function(resourceName)
     if GetCurrentResourceName() == resourceName then
         for id, lab in pairs(CurrentLabs) do
             if lab and lab.blip and DoesBlipExist(lab.blip) then RemoveBlip(lab.blip) end
-            exports.ox_target:removeZone('drug_lab_main_' .. id)
-            exports.ox_target:removeZone('drug_lab_stash_' .. id)
-            exports.ox_target:removeZone('drug_lab_process_' .. id)
-            exports.ox_target:removeZone('drug_lab_enter_' .. id)
-            exports.ox_target:removeZone('drug_lab_exit_' .. id)
+            RemoveLabTargetZone('drug_lab_main_' .. id)
+            RemoveLabTargetZone('drug_lab_stash_' .. id)
+            RemoveLabTargetZone('drug_lab_process_' .. id)
+            RemoveLabTargetZone('drug_lab_enter_' .. id)
+            RemoveLabTargetZone('drug_lab_exit_' .. id)
         end
         CurrentLabs = {}
         print("[xrb-DrugLabs] Client script (Player Module) stopped, cleaned up blips and targets.")
